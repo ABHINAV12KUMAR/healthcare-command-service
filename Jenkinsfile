@@ -41,10 +41,10 @@ pipeline {
         SPRING_PROFILES_ACTIVE = "dev"
     }
 
-    tools {
-        maven 'Maven-3.9'
-        jdk 'JDK-17'
-    }
+   tools {
+       maven 'maven3'
+       jdk '17.0'
+   }
 
     stages {
 
