@@ -15,25 +15,12 @@ pipeline {
         GIT_BRANCH = "main"
 
         // =========================
-        // JAVA & MAVEN
+        // WINDOWS JAVA & MAVEN PATH
         // =========================
-        JAVA_HOME = "/usr/lib/jvm/java-17-openjdk"
-        MAVEN_HOME = "/opt/maven"
+        JAVA_HOME = "C:\\Program Files\\Java\\jdk-17"
+        MAVEN_HOME = "C:\\Program Files\\apache-maven-3.9.13"
 
-        PATH = "${JAVA_HOME}/bin:${MAVEN_HOME}/bin:${env.PATH}"
-
-        // =========================
-        // MYSQL CONFIG
-        // =========================
-//         DB_URL = "jdbc:mysql://localhost:3306/orderdb"
-//         DB_USERNAME = "root"
-//         DB_PASSWORD = credentials('mysql-password')
-
-        // =========================
-        // KAFKA CONFIG
-        // =========================
-//         KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
-//         KAFKA_TOPIC = "order-topic"
+        PATH = "${JAVA_HOME}\\bin;${MAVEN_HOME}\\bin;${env.PATH}"
 
         // =========================
         // SPRING PROFILE
@@ -41,10 +28,10 @@ pipeline {
         SPRING_PROFILES_ACTIVE = "dev"
     }
 
-   tools {
-       maven 'maven3'
-       jdk '17.0'
-   }
+    tools {
+        maven 'maven3'
+        jdk '17.0'
+    }
 
     stages {
 
@@ -57,55 +44,53 @@ pipeline {
 
         stage('Clean Project') {
             steps {
-                sh 'mvn clean'
+                bat 'mvn clean'
             }
         }
 
         stage('Compile Project') {
             steps {
-                sh 'mvn compile'
+                bat 'mvn compile'
             }
         }
 
         stage('Run Unit Tests') {
             steps {
-                sh 'mvn test'
+                bat 'mvn test'
             }
         }
 
-//         stage('Build Jar') {
-//             steps {
-//                 sh 'mvn package -DskipTests'
-//             }
-//         }
-//
-//         stage('Build Docker Image') {
-//             steps {
-//                 sh """
-//                     docker build -t ${APP_NAME}:latest .
-//                 """
-//             }
-//         }
+        stage('Build Jar') {
+            steps {
+                bat 'mvn package -DskipTests'
+            }
+        }
 
-//         stage('Deploy Container') {
-//             steps {
-//                 sh """
-//                     docker stop ${APP_NAME} || true
-//                     docker rm ${APP_NAME} || true
-//
-//                     docker run -d \
-//                     --name ${APP_NAME} \
-//                     -p 8080:8080 \
-//                     -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
-//                     -e DB_URL=${DB_URL} \
-//                     -e DB_USERNAME=${DB_USERNAME} \
-//                     -e DB_PASSWORD=${DB_PASSWORD} \
-//                     -e KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS} \
-//                     -e KAFKA_TOPIC=${KAFKA_TOPIC} \
-//                     ${APP_NAME}:latest
-//                 """
-//             }
-//         }
+        // =========================
+        // OPTIONAL DOCKER STAGES
+        // =========================
+
+        // stage('Build Docker Image') {
+        //     steps {
+        //         bat "docker build -t %APP_NAME%:latest ."
+        //     }
+        // }
+
+        // stage('Deploy Container') {
+        //     steps {
+        //         bat """
+        //             docker stop %APP_NAME%
+        //             docker rm %APP_NAME%
+        //
+        //             docker run -d ^
+        //             --name %APP_NAME% ^
+        //             -p 8080:8080 ^
+        //             -e SPRING_PROFILES_ACTIVE=%SPRING_PROFILES_ACTIVE% ^
+        //             %APP_NAME%:latest
+        //         """
+        //     }
+        // }
+
     }
 
     post {
