@@ -42,11 +42,11 @@ pipeline {
             }
         }
 
-        stage('Clean Project') {
-            steps {
-                bat 'mvn clean'
-            }
-        }
+//         stage('Clean Project') {
+//             steps {
+//                 bat 'mvn clean'
+//             }
+//         }
 
         stage('Compile Project') {
             steps {
