@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: command-service
+
+  profiles:
+    active: dev
+
+
+  jackson:
+    serialization:
+      indent_output: true
