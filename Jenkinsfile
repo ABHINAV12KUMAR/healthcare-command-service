@@ -16,35 +16,42 @@ pipeline {
         stage('Verify Files') {
             steps {
                 bat 'dir'
+                bat 'dir command'
             }
         }
 
         stage('Clean and Compile') {
             steps {
-                bat 'mvn clean compile'
+                dir('command') {
+                    bat 'mvn clean compile'
+                }
             }
         }
 
         stage('Run Unit Tests') {
             steps {
-                bat 'mvn test'
+                dir('command') {
+                    bat 'mvn test'
+                }
             }
         }
 
         stage('Build Jar') {
             steps {
-                bat 'mvn package -DskipTests'
+                dir('command') {
+                    bat 'mvn package -DskipTests'
+                }
             }
         }
     }
 
     post {
         success {
-            echo "Application Build Successful"
+            echo 'Application Build Successful'
         }
 
         failure {
-            echo "Pipeline Failed"
+            echo 'Pipeline Failed'
         }
 
         always {
