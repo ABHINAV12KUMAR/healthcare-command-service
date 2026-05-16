@@ -7,7 +7,6 @@ pipeline {
     }
 
     environment {
-        APP_NAME = "healthcare-command-service"
         SPRING_PROFILES_ACTIVE = "dev"
     }
 
@@ -16,30 +15,21 @@ pipeline {
         stage('Verify Files') {
             steps {
                 bat 'dir'
-                bat 'dir command'
             }
         }
 
-        stage('Clean and Compile') {
+        stage('Build Model Module') {
             steps {
-                dir('command') {
-                    bat 'mvn clean compile'
+                dir('model') {
+                    bat 'mvn clean install -DskipTests'
                 }
             }
         }
 
-        stage('Run Unit Tests') {
+        stage('Build Command Module') {
             steps {
                 dir('command') {
-                    bat 'mvn test'
-                }
-            }
-        }
-
-        stage('Build Jar') {
-            steps {
-                dir('command') {
-                    bat 'mvn package -DskipTests'
+                    bat 'mvn clean package -DskipTests'
                 }
             }
         }
@@ -47,7 +37,7 @@ pipeline {
 
     post {
         success {
-            echo 'Application Build Successful'
+            echo 'Build Successful'
         }
 
         failure {
