@@ -1,56 +1,27 @@
 pipeline {
     agent any
 
-    environment {
-
-        // =========================
-        // APP CONFIG
-        // =========================
-        APP_NAME = "springboot-kafka-app"
-
-        // =========================
-        // GITHUB CONFIG
-        // =========================
-        GIT_REPO = "https://github.com/ABHINAV12KUMAR/healthcare-command-service.git"
-        GIT_BRANCH = "main"
-
-        // =========================
-        // WINDOWS JAVA & MAVEN PATH
-        // =========================
-        JAVA_HOME = "C:\\Program Files\\Java\\jdk-17"
-        MAVEN_HOME = "C:\\Program Files\\apache-maven-3.9.13"
-
-        PATH = "${JAVA_HOME}\\bin;${MAVEN_HOME}\\bin;${env.PATH}"
-
-        // =========================
-        // SPRING PROFILE
-        // =========================
-        SPRING_PROFILES_ACTIVE = "dev"
-    }
-
     tools {
         maven 'maven3'
         jdk '17.0'
     }
 
+    environment {
+        APP_NAME = "healthcare-command-service"
+        SPRING_PROFILES_ACTIVE = "dev"
+    }
+
     stages {
 
-        stage('Checkout Code') {
+        stage('Verify Files') {
             steps {
-                git branch: "${GIT_BRANCH}",
-                    url: "${GIT_REPO}"
+                bat 'dir'
             }
         }
 
-//         stage('Clean Project') {
-//             steps {
-//                 bat 'mvn clean'
-//             }
-//         }
-
-        stage('Compile Project') {
+        stage('Clean and Compile') {
             steps {
-                bat 'mvn compile'
+                bat 'mvn clean compile'
             }
         }
 
@@ -65,38 +36,11 @@ pipeline {
                 bat 'mvn package -DskipTests'
             }
         }
-
-        // =========================
-        // OPTIONAL DOCKER STAGES
-        // =========================
-
-        // stage('Build Docker Image') {
-        //     steps {
-        //         bat "docker build -t %APP_NAME%:latest ."
-        //     }
-        // }
-
-        // stage('Deploy Container') {
-        //     steps {
-        //         bat """
-        //             docker stop %APP_NAME%
-        //             docker rm %APP_NAME%
-        //
-        //             docker run -d ^
-        //             --name %APP_NAME% ^
-        //             -p 8080:8080 ^
-        //             -e SPRING_PROFILES_ACTIVE=%SPRING_PROFILES_ACTIVE% ^
-        //             %APP_NAME%:latest
-        //         """
-        //     }
-        // }
-
     }
 
     post {
-
         success {
-            echo "Application Deployment Successful"
+            echo "Application Build Successful"
         }
 
         failure {
