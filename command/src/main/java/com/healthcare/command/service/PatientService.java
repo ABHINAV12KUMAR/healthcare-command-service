@@ -27,26 +27,30 @@ public class PatientService {
     @Transactional
     public PatientResponse createPatient(PatientDTO dto) {
         log.info("Creating patient: {}", dto.getName());
+
         Patient patient = patientMapper.toEntity(dto);
-        Patient saved = patientRepository.save(patient);//5 ms
+        Patient saved = patientRepository.save(patient);
+
         log.info("Patient saved with id: {}", saved.getId());
-        // Add kafka Event Logic create
-        PatientEvent event =new PatientEvent();
+
+        PatientEvent event = new PatientEvent();
         event.setEventType("CREATE");
         event.setPatientId(saved.getId());
-        log.info("Publishing Kafka event: {}", event);
         event.setName(saved.getName());
         event.setDisease(saved.getDisease());
+        event.setEmail(saved.getEmail());
+
+        log.info("Publishing Kafka event: {}", event);
 
         log.info("Saving event to Outbox...");
         outboxService.saveEvent(event);
-        //patientProducer.sendEvent(event);
+
         return patientMapper.toResponse(saved);
     }
 
-    public PatientResponse updatePatient(Long Id, PatientDTO dto){
+    public PatientResponse updatePatient(Long Id, PatientDTO dto) {
         Patient patient = patientRepository.findById(Id)
-                .orElseThrow(()->new RuntimeException("Patient Not Found"));
+                .orElseThrow(() -> new RuntimeException("Patient Not Found"));
         patient.setName(dto.getName());
         patient.setDisease(dto.getDisease());
         Patient saved = patientRepository.save(patient);
