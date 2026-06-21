@@ -23,15 +23,24 @@ pipeline {
             }
         }
 
+        stage('List Workspace Files') {
+            steps {
+                bat 'dir'
+                bat 'dir command'
+            }
+        }
+
         stage('Build Command Service') {
             steps {
-                bat 'mvn clean package -DskipTests'
+                dir('command') {
+                    bat 'mvn clean package -DskipTests'
+                }
             }
         }
 
         stage('Archive Artifact') {
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                archiveArtifacts artifacts: 'command/target/*.jar', fingerprint: true
             }
         }
     }
