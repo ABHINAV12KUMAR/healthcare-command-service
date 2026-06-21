@@ -1,51 +1,48 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'maven3'
-        jdk '17.0'
-    }
-
-    environment {
-        SPRING_PROFILES_ACTIVE = "dev"
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timestamps()
+        timeout(time: 15, unit: 'MINUTES')
+        disableConcurrentBuilds()
     }
 
     stages {
 
-        stage('Verify Files') {
+        stage('Checkout') {
             steps {
-                bat 'dir'
+                checkout scm
+                echo 'Command service code checkout completed.'
             }
         }
 
-        stage('Build Model Module') {
+        stage('Check Maven') {
             steps {
-                dir('model') {
-                    bat 'mvn clean install -DskipTests'
-                }
+                bat 'mvn -v'
             }
         }
 
-        stage('Build Command Module') {
+        stage('Build Command Service') {
             steps {
-                dir('command') {
-                    bat 'mvn clean package -DskipTests'
-                }
+                bat 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
     }
 
     post {
         success {
-            echo 'Build Successful'
+            echo 'Command service CI pipeline completed successfully.'
         }
 
         failure {
-            echo 'Pipeline Failed'
-        }
-
-        always {
-            cleanWs()
+            echo 'Command service CI pipeline failed. Check console logs.'
         }
     }
 }
