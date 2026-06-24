@@ -39,18 +39,20 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            steps {
-                dir('command') {
-                    withSonarQubeEnv('SonarQube') {
-                        bat '''
-                            mvn sonar:sonar ^
-                            -Dsonar.projectKey=healthcare-command-service ^
-                            -Dsonar.projectName=healthcare-command-service
-                        '''
-                    }
-                }
-            }
-        }
+             steps {
+                 dir('command') {
+                     withSonarQubeEnv('SonarQube') {
+                         bat '''
+                             mvn sonar:sonar ^
+                             -Dsonar.projectKey=healthcare-command-service ^
+                             -Dsonar.projectName=healthcare-command-service ^
+                             -Dsonar.host.url=%SONAR_HOST_URL% ^
+                             -Dsonar.login=%SONAR_AUTH_TOKEN%
+                         '''
+                     }
+                 }
+             }
+         }
 
         stage('Archive Artifact') {
             steps {
