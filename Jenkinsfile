@@ -38,6 +38,20 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                dir('command') {
+                    withSonarQubeEnv('SonarQube') {
+                        bat '''
+                            mvn sonar:sonar ^
+                            -Dsonar.projectKey=healthcare-command-service ^
+                            -Dsonar.projectName=healthcare-command-service
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Archive Artifact') {
             steps {
                 archiveArtifacts artifacts: 'command/target/*.jar', fingerprint: true
@@ -47,11 +61,11 @@ pipeline {
 
     post {
         success {
-            echo 'Command service CI pipeline completed successfully.'
+            echo 'Command service CI + SonarQube pipeline completed successfully.'
         }
 
         failure {
-            echo 'Command service CI pipeline failed. Check console logs.'
+            echo 'Command service pipeline failed. Check console logs.'
         }
     }
 }
