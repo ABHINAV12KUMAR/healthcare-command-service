@@ -62,6 +62,27 @@ pipeline {
              }
          }
 
+        stage('Build Docker Image') {
+            steps {
+                dir('command') {
+                    bat """
+                        docker build -t healthcare-command-service:${BUILD_NUMBER} .
+                        docker tag healthcare-command-service:${BUILD_NUMBER} healthcare-command-service:latest
+                    """
+                }
+            }
+            post {
+                success { echo "✅ Image built: healthcare-command-service:${BUILD_NUMBER}" }
+                failure { echo "❌ Docker build failed." }
+            }
+        }
+
+        stage('List Docker Images') {
+            steps {
+                bat 'docker images healthcare-command-service'
+            }
+        }
+
         stage('Archive Artifact') {
             steps {
                 archiveArtifacts artifacts: 'command/target/*.jar', fingerprint: true
