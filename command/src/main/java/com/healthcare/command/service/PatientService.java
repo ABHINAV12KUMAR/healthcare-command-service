@@ -10,6 +10,9 @@ import com.healthcare.command.response.PatientResponse;
 import com.healthcare.model.Patient;
 import com.healthcare.model.PatientDTO;
 import com.healthcare.model.PatientEvent;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,55 +26,72 @@ public class PatientService {
     private final PatientMapper patientMapper;
     private final PatientProducer patientProducer;
     private final OutboxService outboxService;
+    private final MeterRegistry meterRegistry;
+
+    private final Counter patientCreatedCounter;
+    private final Counter patientUpdatedCounter;
+    private final Counter patientDeletedCounter;
+    private final Timer patientCreateTimer;
+    private final Timer patientUpdateTimer;
+    private final Timer patientDeleteTimer;
 
     @Transactional
     public PatientResponse createPatient(PatientDTO dto) {
-        log.info("Creating patient: {}", dto.getName());
+        return patientCreateTimer.record(() -> {
+            log.info("Creating patient: {}", dto.getName());
 
-        Patient patient = patientMapper.toEntity(dto);
-        Patient saved = patientRepository.save(patient);
+            Patient patient = patientMapper.toEntity(dto);
+            Patient saved = patientRepository.save(patient);
 
-        log.info("Patient saved with id: {}", saved.getId());
+            log.info("Patient saved with id: {}", saved.getId());
 
-        PatientEvent event = new PatientEvent();
-        event.setEventType("CREATE");
-        event.setPatientId(saved.getId());
-        event.setName(saved.getName());
-        event.setDisease(saved.getDisease());
-        event.setEmail(saved.getEmail());
+            PatientEvent event = new PatientEvent();
+            event.setEventType("CREATE");
+            event.setPatientId(saved.getId());
+            event.setName(saved.getName());
+            event.setDisease(saved.getDisease());
+            event.setEmail(saved.getEmail());
 
-        log.info("Publishing Kafka event: {}", event);
+            log.info("Publishing Kafka event: {}", event);
 
-        log.info("Saving event to Outbox...");
-        outboxService.saveEvent(event);
+            log.info("Saving event to Outbox...");
+            outboxService.saveEvent(event);
 
-        return patientMapper.toResponse(saved);
+            patientCreatedCounter.increment();
+            return patientMapper.toResponse(saved);
+        });
     }
 
     public PatientResponse updatePatient(Long Id, PatientDTO dto) {
-        Patient patient = patientRepository.findById(Id)
-                .orElseThrow(() -> new RuntimeException("Patient Not Found"));
-        patient.setName(dto.getName());
-        patient.setDisease(dto.getDisease());
-        Patient saved = patientRepository.save(patient);
-        // Add the Kafka Event Logic
-        PatientEvent event = new PatientEvent();
-        event.setEventType("UPDATE");
-        event.setPatientId(saved.getId());
-        event.setName(saved.getName());
-        event.setDisease(saved.getDisease());
-        patientProducer.sendEvent(event);
-        return patientMapper.toResponse(saved);
+        return patientUpdateTimer.record(() -> {
+            Patient patient = patientRepository.findById(Id)
+                    .orElseThrow(() -> new RuntimeException("Patient Not Found"));
+            patient.setName(dto.getName());
+            patient.setDisease(dto.getDisease());
+            Patient saved = patientRepository.save(patient);
+            // Add the Kafka Event Logic
+            PatientEvent event = new PatientEvent();
+            event.setEventType("UPDATE");
+            event.setPatientId(saved.getId());
+            event.setName(saved.getName());
+            event.setDisease(saved.getDisease());
+            patientProducer.sendEvent(event);
+            patientUpdatedCounter.increment();
+            return patientMapper.toResponse(saved);
+        });
     }
 
     public void deletePatient(Long id) {
-        Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
-        // Add the kafka Event Delete Logic
-        PatientEvent event = new PatientEvent();
-        event.setEventType("DELETE");
-        event.setPatientId(id);
-        patientProducer.sendEvent(event);
-        patientRepository.delete(patient);
+        patientDeleteTimer.record(() -> {
+            Patient patient = patientRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+            // Add the kafka Event Delete Logic
+            PatientEvent event = new PatientEvent();
+            event.setEventType("DELETE");
+            event.setPatientId(id);
+            patientProducer.sendEvent(event);
+            patientRepository.delete(patient);
+            patientDeletedCounter.increment();
+        });
     }
 }
